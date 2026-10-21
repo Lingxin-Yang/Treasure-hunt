@@ -1,18 +1,4 @@
-/* ============================================================
- * 寻宝之旅 —— 交互式异步寻宝游戏
- * ------------------------------------------------------------
- * 本文件刻意不使用 Promise 的 then 链式调用，所有流程都用 async/await 表达：
- *
- *   1) delay(ms) 把 setTimeout 包装成 Promise；
- *   2) waitForUserChoice() 返回一个“悬而未决”的 Promise；
- *   3) 按钮 click 事件里调用 resolve(choice)，这个 Promise 才完成；
- *   4) await 之后的代码于是继续执行，主流程从头到尾像同步代码一样好读。
- *
- * 关键点：async 函数执行到 await 时会“暂停”（交还控制权），
- * 但不会阻塞浏览器 —— 玩家依然可以点击按钮、看到动画。
- * 点击发生时，事件循环调用 selectChoice()，而它手里握着
- * waitForUserChoice() 暴露出来的 resolve 函数，于是把选择结果送回主线。
- * ============================================================ */
+
 
 'use strict';
 
@@ -61,8 +47,7 @@ function ensureActive(runId) {
 }
 
 /**
- * 【核心机制】通用等待函数：返回一个 Promise，并把 resolve / reject 暂存起来。
- *
+ 
  * 调用方写：
  *     const choice = await waitForUserChoice();
  * 此时 async 函数会停在这一行，直到某个按钮的 click 事件
