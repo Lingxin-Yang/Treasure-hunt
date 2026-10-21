@@ -1,5 +1,5 @@
 /* ============================================================
- * Argus-Cell 寻宝之旅 —— 交互式异步寻宝游戏
+ * 寻宝之旅 —— 交互式异步寻宝游戏
  * ------------------------------------------------------------
  * 本文件刻意不使用 Promise 的 then 链式调用，所有流程都用 async/await 表达：
  *
@@ -1059,7 +1059,7 @@ async function playEnding(runId) {
     });
     await typeLine('石像倒塌的尘埃落定，宝箱房间的门在你面前缓缓打开。', { runId });
     await typeLine('你拂去箱盖上的灰尘，锁扣在指尖发出轻响。', { runId });
-    await typeLine('恭喜！你打开了神秘的箱子，找到了传说中的 Argus-Cell 宝藏！', {
+    await typeLine('恭喜！你打开了神秘的箱子，找到了传说中的宝藏！', {
         runId,
         tone: 'success',
         speed: REDUCED_MOTION ? 0 : 26,
@@ -1078,9 +1078,9 @@ async function playEnding(runId) {
         type: 'win',
         icon: '💎',
         title: '宝藏到手！',
-        text: '你带着 Argus-Cell 宝藏走出了神庙，成为传说中的寻宝者。',
+        text: '你带着宝藏走出了神庙，成为传说中的寻宝者。',
         stats: [
-            ['找到宝藏', 'Argus-Cell'],
+            ['宝藏', '已找到'],
             ['成功通过', `${game.stats.cleared} 关`],
             ['冒险用时', formatDuration()],
         ],
