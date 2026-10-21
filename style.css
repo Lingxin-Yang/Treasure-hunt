@@ -1,0 +1,1491 @@
+/* ============================================================
+   Argus-Cell 寻宝之旅 —— 样式表
+   主题：深夜神庙 + 古金色光晕 + 玻璃质感面板
+   动画：背景光晕漂浮、罗盘旋转、剧情逐行淡入、
+         打字机光标闪烁、选项浮入、失败抖动、通关彩带
+   ============================================================ */
+
+/* ---------- 1. 全局变量与基础重置 ---------- */
+:root {
+    --bg-deep: #05070d;
+    --bg-night: #0a0f1e;
+    --panel: rgba(17, 23, 39, 0.86);
+    --panel-soft: rgba(28, 37, 60, 0.72);
+    --line: rgba(150, 174, 218, 0.16);
+    --text: #e8eefc;
+    --text-dim: #93a3c2;
+    --text-faint: #66779a;
+    --gold: #e8c27a;
+    --gold-bright: #ffd98e;
+    --green: #7fe3b0;
+    --red: #ff9b9b;
+    --violet: #c6a6ff;
+    --radius-lg: 26px;
+    --radius-md: 16px;
+    --shadow-card: 0 30px 90px rgba(0, 0, 0, 0.65);
+    --ease-out: cubic-bezier(0.2, 0.8, 0.2, 1);
+}
+
+* {
+    box-sizing: border-box;
+    margin: 0;
+    padding: 0;
+}
+
+html {
+    color-scheme: dark;
+}
+
+body {
+    min-height: 100vh;
+    display: flex;
+    align-items: flex-start;
+    justify-content: center;
+    padding: clamp(18px, 4vh, 40px) 20px;
+    overflow-x: hidden;
+    color: var(--text);
+    font-family: "Segoe UI", "PingFang SC", "Microsoft YaHei", Tahoma, sans-serif;
+    background:
+        radial-gradient(1100px 720px at 50% -12%, #1b2a4a 0%, #0a0f1e 48%, #05070d 100%);
+}
+
+code {
+    font-family: "Cascadia Code", Consolas, monospace;
+    font-size: 0.92em;
+    color: var(--gold);
+}
+
+::selection {
+    background: rgba(232, 194, 122, 0.32);
+    color: #fff;
+}
+
+/* ---------- 2. 背景装饰层 ---------- */
+.background {
+    position: fixed;
+    inset: 0;
+    z-index: 0;
+    pointer-events: none;
+    overflow: hidden;
+}
+
+/* 三个缓慢漂浮的彩色光晕，营造神庙火把的氛围 */
+.orb {
+    position: absolute;
+    border-radius: 50%;
+    filter: blur(70px);
+    opacity: 0.5;
+    animation: orbFloat 16s ease-in-out infinite alternate;
+}
+
+.orb-a {
+    top: -120px;
+    left: 8%;
+    width: 420px;
+    height: 420px;
+    background: radial-gradient(circle, rgba(232, 194, 122, 0.3), transparent 68%);
+}
+
+.orb-b {
+    right: -140px;
+    bottom: -80px;
+    width: 480px;
+    height: 480px;
+    background: radial-gradient(circle, rgba(86, 120, 220, 0.26), transparent 68%);
+    animation-delay: -5s;
+}
+
+.orb-c {
+    top: 40%;
+    left: 58%;
+    width: 320px;
+    height: 320px;
+    background: radial-gradient(circle, rgba(150, 96, 220, 0.18), transparent 70%);
+    animation-delay: -9s;
+}
+
+@keyframes orbFloat {
+    from {
+        transform: translate3d(0, 0, 0) scale(1);
+    }
+    to {
+        transform: translate3d(36px, -42px, 0) scale(1.12);
+    }
+}
+
+/* 两层横向漂移的雾气 */
+.fog {
+    position: absolute;
+    left: -20%;
+    width: 140%;
+    height: 220px;
+    background: radial-gradient(ellipse at center, rgba(120, 150, 210, 0.08), transparent 70%);
+    filter: blur(18px);
+    animation: fogDrift 26s linear infinite;
+}
+
+.fog-a {
+    top: 16%;
+}
+
+.fog-b {
+    bottom: 6%;
+    animation-delay: -13s;
+    animation-direction: reverse;
+}
+
+@keyframes fogDrift {
+    from {
+        transform: translateX(-6%);
+    }
+    50% {
+        transform: translateX(6%);
+    }
+    to {
+        transform: translateX(-6%);
+    }
+}
+
+/* 由 JS 生成的尘埃粒子：默认小圆点，上下漂浮 + 闪烁 */
+.dust {
+    position: absolute;
+    inset: 0;
+}
+
+.dust span {
+    position: absolute;
+    width: 3px;
+    height: 3px;
+    border-radius: 50%;
+    background: var(--gold-bright);
+    box-shadow: 0 0 8px rgba(255, 217, 142, 0.8);
+    animation: dustFloat ease-in-out infinite alternate, dustTwinkle 3.6s ease-in-out infinite;
+}
+
+@keyframes dustFloat {
+    from {
+        transform: translateY(0);
+    }
+    to {
+        transform: translateY(-38px);
+    }
+}
+
+@keyframes dustTwinkle {
+    0%, 100% {
+        opacity: 0.15;
+    }
+    50% {
+        opacity: 0.65;
+    }
+}
+
+
+/* ---------- 3. 主面板 ---------- */
+.game-card {
+    position: relative;
+    z-index: 1;
+    width: min(920px, 100%);
+    padding: 26px 28px 18px;
+    border: 1px solid rgba(232, 194, 122, 0.22);
+    border-radius: var(--radius-lg);
+    background:
+        linear-gradient(158deg, rgba(26, 35, 57, 0.94) 0%, rgba(11, 16, 30, 0.97) 62%, rgba(8, 11, 21, 0.98) 100%);
+    box-shadow: var(--shadow-card), inset 0 1px 0 rgba(255, 255, 255, 0.06);
+    animation: cardIn 0.9s var(--ease-out) both;
+    overflow: hidden;
+}
+
+/* 顶部一道金色高光，像神庙石门缝里漏出的光 */
+.game-card::before {
+    content: "";
+    position: absolute;
+    top: 0;
+    left: 12%;
+    right: 12%;
+    height: 1px;
+    background: linear-gradient(90deg, transparent, rgba(255, 217, 142, 0.85), transparent);
+    opacity: 0.7;
+}
+
+@keyframes cardIn {
+    from {
+        opacity: 0;
+        transform: translateY(28px) scale(0.985);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0) scale(1);
+    }
+}
+
+/* ---------- 4. 顶部品牌区 ---------- */
+.game-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 18px;
+    flex-wrap: wrap;
+    padding-bottom: 18px;
+    border-bottom: 1px solid var(--line);
+}
+
+.brand {
+    display: flex;
+    align-items: center;
+    gap: 15px;
+}
+
+/* 罗盘：外圈旋转虚线，指针来回摆动 */
+.compass {
+    position: relative;
+    width: 52px;
+    height: 52px;
+    flex: 0 0 auto;
+    display: grid;
+    place-items: center;
+    border-radius: 50%;
+    background: radial-gradient(circle at 50% 40%, rgba(232, 194, 122, 0.18), rgba(9, 13, 24, 0.9) 70%);
+    box-shadow: 0 0 0 1px rgba(232, 194, 122, 0.28), 0 0 24px rgba(232, 194, 122, 0.14);
+}
+
+.compass-ring {
+    position: absolute;
+    inset: 5px;
+    border-radius: 50%;
+    border: 1px dashed rgba(232, 194, 122, 0.55);
+    animation: compassSpin 18s linear infinite;
+}
+
+.compass-needle {
+    position: absolute;
+    top: 9px;
+    width: 7px;
+    height: 31px;
+    clip-path: polygon(50% 0, 100% 52%, 50% 100%, 0 52%);
+    background: linear-gradient(180deg, var(--gold-bright) 0%, var(--gold-bright) 48%, #64708c 50%, #64708c 100%);
+    transform-origin: 50% 54%;
+    animation: needleSway 5.5s ease-in-out infinite;
+}
+
+.compass-star {
+    position: relative;
+    z-index: 1;
+    font-size: 13px;
+    color: #0b1020;
+    text-shadow: 0 0 6px rgba(255, 217, 142, 0.9);
+}
+
+@keyframes compassSpin {
+    to {
+        transform: rotate(360deg);
+    }
+}
+
+@keyframes needleSway {
+    0%, 100% {
+        transform: rotate(-24deg);
+    }
+    50% {
+        transform: rotate(28deg);
+    }
+}
+
+.brand-text h1 {
+    font-size: clamp(20px, 2.6vw, 26px);
+    font-weight: 700;
+    letter-spacing: 0.02em;
+    background: linear-gradient(100deg, #fff5dd 0%, var(--gold-bright) 45%, #d8b06a 100%);
+    -webkit-background-clip: text;
+    background-clip: text;
+    color: transparent;
+}
+
+.title-accent {
+    font-weight: 500;
+}
+
+/* 顶部“重新开始”按钮 */
+.ghost-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 7px;
+    padding: 9px 15px;
+    border: 1px solid rgba(232, 194, 122, 0.28);
+    border-radius: 999px;
+    background: rgba(232, 194, 122, 0.06);
+    color: var(--gold);
+    font-family: inherit;
+    font-size: 13px;
+    cursor: pointer;
+    transition: background 0.25s, border-color 0.25s, box-shadow 0.25s, transform 0.25s;
+}
+
+.ghost-btn:hover {
+    background: rgba(232, 194, 122, 0.15);
+    border-color: rgba(255, 217, 142, 0.7);
+    box-shadow: 0 0 22px rgba(232, 194, 122, 0.2);
+    transform: translateY(-1px);
+}
+
+.ghost-btn:active {
+    transform: scale(0.97);
+}
+
+.ghost-icon {
+    font-size: 15px;
+    line-height: 1;
+    transition: transform 0.5s var(--ease-out);
+}
+
+.ghost-btn:hover .ghost-icon {
+    transform: rotate(-180deg);
+}
+
+/* ---------- 5. 状态栏 ---------- */
+.hud {
+    display: flex;
+    align-items: center;
+    gap: 26px;
+    flex-wrap: wrap;
+    padding: 15px 2px 17px;
+}
+
+.hud-item {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    min-width: 76px;
+}
+
+.hud-label {
+    font-size: 10.5px;
+    letter-spacing: 0.16em;
+    color: var(--text-faint);
+}
+
+.hud-value {
+    font-size: 15px;
+    font-weight: 600;
+    color: var(--text);
+}
+
+/* “已通过”只展示已完成地点，不展示未到达关卡或剩余数量 */
+.cleared-panel {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-end;
+    gap: 7px;
+    min-width: 0;
+    max-width: 72%;
+    margin-left: auto;
+}
+
+.cleared-list {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: flex-end;
+    gap: 6px;
+}
+
+.cleared-empty {
+    font-size: 12px;
+    color: var(--text-faint);
+    letter-spacing: 0.08em;
+}
+
+.cleared-chip {
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    padding: 4px 10px;
+    border: 1px solid rgba(232, 194, 122, 0.3);
+    border-radius: 999px;
+    background: rgba(232, 194, 122, 0.08);
+    color: var(--gold);
+    font-size: 11.5px;
+    letter-spacing: 0.04em;
+    animation: chipIn 0.45s var(--ease-out) both;
+}
+
+.cleared-chip::before {
+    content: "✓";
+    font-size: 10px;
+    color: var(--gold-bright);
+}
+
+@keyframes chipIn {
+    from {
+        opacity: 0;
+        transform: translateY(6px) scale(0.9);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0) scale(1);
+    }
+}
+
+/* ---------- 6. 寻宝场景舞台 ---------- */
+.journey {
+    --scene-a: #2a2234;
+    --scene-b: #0d0b14;
+    --scene-accent: #e8c27a;
+    position: relative;
+    height: 136px;
+    margin: 0 0 14px;
+    border: 1px solid rgba(150, 174, 218, 0.16);
+    border-radius: 18px;
+    background:
+        radial-gradient(ellipse at 50% 120%, rgba(232, 194, 122, 0.12), transparent 62%),
+        linear-gradient(180deg, var(--scene-a), var(--scene-b) 76%);
+    box-shadow: inset 0 0 40px rgba(0, 0, 0, 0.45);
+    overflow: hidden;
+    isolation: isolate;
+    transition: background 0.7s ease;
+}
+
+/* 场景切换时整体闪一下，像穿过一层光幕 */
+.journey.is-shifting {
+    animation: sceneShift 0.7s var(--ease-out);
+}
+
+@keyframes sceneShift {
+    0% {
+        transform: scale(0.985);
+        filter: brightness(1.45) saturate(1.2);
+    }
+    100% {
+        transform: scale(1);
+        filter: brightness(1) saturate(1);
+    }
+}
+
+/* 每个地点拥有独立色调，背景随关卡平滑过渡 */
+.journey[data-scene="library"] { --scene-a: #2a2234; --scene-b: #0d0b14; --scene-accent: #e8c27a; }
+.journey[data-scene="forest"] { --scene-a: #12261f; --scene-b: #07110d; --scene-accent: #7fe3b0; }
+.journey[data-scene="swamp"] { --scene-a: #152730; --scene-b: #071014; --scene-accent: #68c7b9; }
+.journey[data-scene="minecart"] { --scene-a: #2a2119; --scene-b: #0d0906; --scene-accent: #ffb45e; }
+.journey[data-scene="teleport"] { --scene-a: #241b3d; --scene-b: #0b0817; --scene-accent: #c6a6ff; }
+.journey[data-scene="cliff"] { --scene-a: #1b2938; --scene-b: #080d14; --scene-accent: #9fd0ff; }
+.journey[data-scene="maze"] { --scene-a: #2a2316; --scene-b: #0f0c06; --scene-accent: #ffd98e; }
+.journey[data-scene="guardian"] { --scene-a: #301a1a; --scene-b: #120707; --scene-accent: #ff9b6b; }
+.journey[data-scene="treasure"] { --scene-a: #3a2c12; --scene-b: #120d04; --scene-accent: #ffd98e; }
+
+/* 天空微光 */
+.journey-sky {
+    position: absolute;
+    inset: 0;
+    background:
+        radial-gradient(circle at 18% 28%, rgba(255, 255, 255, 0.08), transparent 22%),
+        radial-gradient(circle at 82% 18%, rgba(255, 255, 255, 0.06), transparent 18%);
+}
+
+/* 缓缓浮动的光球，像月光或远处的火光 */
+.journey-orb {
+    position: absolute;
+    top: 18%;
+    right: 16%;
+    width: 54px;
+    height: 54px;
+    border-radius: 50%;
+    background: radial-gradient(circle, var(--scene-accent), transparent 68%);
+    box-shadow: 0 0 60px var(--scene-accent);
+    filter: blur(2px);
+    opacity: 0.2;
+    mix-blend-mode: screen;
+    animation: sceneOrb 6s ease-in-out infinite;
+}
+
+@keyframes sceneOrb {
+    0%, 100% {
+        transform: translateY(0) scale(1);
+        opacity: 0.42;
+    }
+    50% {
+        transform: translateY(-7px) scale(1.12);
+        opacity: 0.7;
+    }
+}
+
+/* 横向漂移的雾层 */
+.journey-fog {
+    position: absolute;
+    left: -15%;
+    width: 130%;
+    height: 58px;
+    border-radius: 50%;
+    background: radial-gradient(ellipse at center, rgba(210, 230, 255, 0.16), transparent 70%);
+    filter: blur(9px);
+    animation: sceneFog 14s ease-in-out infinite;
+}
+
+.journey-fog-a {
+    bottom: 20%;
+}
+
+.journey-fog-b {
+    bottom: 2%;
+    opacity: 0.65;
+    animation-delay: -7s;
+    animation-direction: reverse;
+}
+
+@keyframes sceneFog {
+    0%, 100% {
+        transform: translateX(-4%);
+    }
+    50% {
+        transform: translateX(4%);
+    }
+}
+
+/* 地面暗影，随场景改变底部色调 */
+.journey-ground {
+    position: absolute;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    height: 46%;
+    background:
+        linear-gradient(180deg, transparent, var(--scene-b) 86%),
+        radial-gradient(ellipse at 50% 100%, var(--scene-a), transparent 66%);
+    pointer-events: none;
+}
+
+/* 漂浮道具：位置、延迟与周期由 JS 内联写入 */
+.journey-props .prop {
+    position: absolute;
+    bottom: 20%;
+    z-index: 1;
+    font-size: clamp(17px, 2.6vw, 24px);
+    opacity: 0.5;
+    filter: drop-shadow(0 0 10px rgba(255, 255, 255, 0.18)) drop-shadow(0 8px 10px rgba(0, 0, 0, 0.55));
+    animation-name: propFloat;
+    animation-timing-function: ease-in-out;
+    animation-iteration-count: infinite;
+    animation-direction: alternate;
+}
+
+.journey-props .prop:nth-child(2),
+.journey-props .prop:nth-child(4) {
+    bottom: 38%;
+    opacity: 0.34;
+}
+
+.journey-props .prop:nth-child(3) {
+    font-size: clamp(26px, 4.2vw, 38px);
+    opacity: 0.65;
+}
+
+@keyframes propFloat {
+    from {
+        transform: translate3d(0, 6px, 0) rotate(-5deg);
+    }
+    to {
+        transform: translate3d(0, -12px, 0) rotate(6deg);
+    }
+}
+
+/* 场景中央的图标与地点名 */
+.journey-content {
+    position: absolute;
+    inset: 0;
+    z-index: 3;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 0;
+    pointer-events: none;
+}
+
+.scene-icon {
+    display: block;
+    font-size: 42px;
+    line-height: 1;
+    filter: drop-shadow(0 0 18px var(--scene-accent)) drop-shadow(0 10px 14px rgba(0, 0, 0, 0.45));
+}
+
+.scene-icon-pop {
+    animation:
+        scenePop 0.55s var(--ease-out) both,
+        sceneFloat 4s 0.55s ease-in-out infinite;
+}
+
+@keyframes scenePop {
+    from {
+        opacity: 0;
+        transform: translateY(12px) scale(0.55);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0) scale(1);
+    }
+}
+
+@keyframes sceneFloat {
+    0%, 100% {
+        transform: translateY(0);
+    }
+    50% {
+        transform: translateY(-7px);
+    }
+}
+
+.scene-caption {
+    position: absolute;
+    top: 10px;
+    left: 14px;
+    padding: 4px 13px;
+    border: 1px solid rgba(255, 255, 255, 0.14);
+    border-radius: 999px;
+    background: rgba(5, 8, 15, 0.52);
+    color: var(--scene-accent);
+    font-size: 11.5px;
+    letter-spacing: 0.18em;
+    white-space: nowrap;
+    text-shadow: 0 0 12px rgba(0, 0, 0, 0.6);
+    backdrop-filter: blur(4px);
+}
+
+/* 场景专属氛围 */
+.journey[data-scene="swamp"] .journey-ground {
+    background:
+        linear-gradient(180deg, transparent, rgba(47, 112, 110, 0.4) 70%, rgba(7, 16, 20, 0.9)),
+        repeating-linear-gradient(180deg, transparent 0 10px, rgba(127, 227, 176, 0.05) 10px 12px);
+}
+
+.journey[data-scene="minecart"] .journey-ground {
+    background:
+        repeating-linear-gradient(90deg, transparent 0 28px, rgba(255, 180, 94, 0.2) 28px 30px),
+        linear-gradient(180deg, transparent, rgba(40, 26, 12, 0.92));
+    animation: railShimmer 1.6s linear infinite;
+}
+
+@keyframes railShimmer {
+    from {
+        background-position: 0 0, 0 0;
+    }
+    to {
+        background-position: 56px 0, 0 0;
+    }
+}
+
+.journey[data-scene="teleport"] .journey-fog {
+    background: radial-gradient(ellipse at center, rgba(198, 166, 255, 0.24), transparent 70%);
+}
+
+.journey[data-scene="treasure"] .journey-orb {
+    opacity: 0.85;
+    animation-duration: 3.2s;
+}
+
+.journey[data-scene="treasure"] .journey-fog {
+    background: radial-gradient(ellipse at center, rgba(255, 217, 142, 0.24), transparent 70%);
+}
+
+/* 四角渐暗，让舞台像一扇望向远方的窗 */
+.journey::after {
+    content: "";
+    position: absolute;
+    inset: 0;
+    z-index: 4;
+    background: radial-gradient(ellipse at 50% 45%, transparent 38%, rgba(3, 5, 10, 0.5) 100%);
+    pointer-events: none;
+}
+
+/* ---------- 7. 剧情窗口 ---------- */
+.story-panel {
+    position: relative;
+    height: clamp(240px, 30vh, 320px);
+    margin: 2px 0 16px;
+    border: 1px solid rgba(150, 174, 218, 0.14);
+    border-radius: 18px;
+    background:
+        linear-gradient(180deg, rgba(7, 11, 21, 0.86), rgba(9, 14, 26, 0.7)),
+        repeating-linear-gradient(180deg, transparent 0 27px, rgba(150, 174, 218, 0.025) 27px 28px);
+    box-shadow: inset 0 0 40px rgba(0, 0, 0, 0.45);
+    overflow: hidden;
+}
+
+/* 顶部渐隐：滚动后不会露出半截被裁切的文字 */
+.story-panel::after {
+    content: "";
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 44px;
+    z-index: 2;
+    background: linear-gradient(180deg, rgba(7, 11, 21, 1) 0, rgba(7, 11, 21, 0.98) 20px, transparent);
+    pointer-events: none;
+}
+
+/* 左侧一条金色细线，像羊皮卷的装订边 */
+.story-panel::before {
+    content: "";
+    position: absolute;
+    top: 18px;
+    bottom: 18px;
+    left: 0;
+    width: 2px;
+    border-radius: 2px;
+    background: linear-gradient(180deg, transparent, rgba(232, 194, 122, 0.55), transparent);
+}
+
+.story-scroll {
+    height: 100%;
+    padding: 20px 24px 34px;
+    overflow-y: auto;
+    scrollbar-width: thin;
+    scrollbar-color: rgba(232, 194, 122, 0.35) transparent;
+}
+
+.story-scroll::-webkit-scrollbar {
+    width: 6px;
+}
+
+.story-scroll::-webkit-scrollbar-thumb {
+    border-radius: 999px;
+    background: rgba(232, 194, 122, 0.3);
+}
+
+.story-scroll::-webkit-scrollbar-track {
+    background: transparent;
+}
+
+/* 底部渐隐，提示内容可以继续向下滚动 */
+.scroll-fade {
+    position: absolute;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    height: 42px;
+    background: linear-gradient(180deg, transparent, rgba(8, 12, 23, 0.92));
+    pointer-events: none;
+}
+
+/* 占位文字：第一句剧情出现后会被 JS 删除 */
+.story-placeholder {
+    color: var(--text-faint);
+    font-size: 14px;
+    font-style: italic;
+    letter-spacing: 0.08em;
+    animation: placeholderPulse 2.4s ease-in-out infinite;
+}
+
+@keyframes placeholderPulse {
+    50% {
+        opacity: 0.42;
+    }
+}
+
+/* 每一行剧情：进入时淡入 + 上移 */
+.story-line {
+    position: relative;
+    padding-left: 18px;
+    margin-bottom: 11px;
+    font-size: 15.5px;
+    line-height: 1.9;
+    color: #c8d4ea;
+    letter-spacing: 0.01em;
+    word-break: break-word;
+    animation: lineIn 0.45s var(--ease-out) both;
+}
+
+.story-line::before {
+    content: "";
+    position: absolute;
+    top: 0.78em;
+    left: 1px;
+    width: 6px;
+    height: 6px;
+    border-radius: 50%;
+    background: rgba(232, 194, 122, 0.4);
+    transition: background 0.3s;
+}
+
+@keyframes lineIn {
+    from {
+        opacity: 0;
+        transform: translateY(10px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+/* 不同语气的剧情行 */
+.story-line.tone-heading {
+    margin: 4px 0 14px;
+    padding-left: 24px;
+    font-size: 18px;
+    font-weight: 700;
+    color: var(--gold-bright);
+    letter-spacing: 0.06em;
+    text-shadow: 0 0 20px rgba(232, 194, 122, 0.22);
+}
+
+.story-line.tone-heading::before {
+    top: 0.72em;
+    width: 12px;
+    height: 2px;
+    border-radius: 2px;
+    background: var(--gold);
+    box-shadow: 0 0 12px rgba(232, 194, 122, 0.8);
+}
+
+.story-line.tone-success {
+    color: var(--green);
+}
+
+.story-line.tone-success::before {
+    background: var(--green);
+    box-shadow: 0 0 8px rgba(127, 227, 176, 0.7);
+}
+
+.story-line.tone-danger {
+    color: var(--red);
+}
+
+.story-line.tone-danger::before {
+    background: var(--red);
+    box-shadow: 0 0 8px rgba(255, 155, 155, 0.7);
+}
+
+.story-line.tone-secret {
+    color: var(--violet);
+    text-shadow: 0 0 16px rgba(198, 166, 255, 0.24);
+}
+
+.story-line.tone-secret::before {
+    background: var(--violet);
+    box-shadow: 0 0 10px rgba(198, 166, 255, 0.85);
+}
+
+.story-line.tone-choice {
+    color: var(--gold);
+    font-weight: 600;
+}
+
+.story-line.tone-choice::before {
+    background: var(--gold);
+}
+
+.story-line.tone-system {
+    font-size: 13.5px;
+    color: var(--text-dim);
+    letter-spacing: 0.04em;
+}
+
+.story-line.tone-system::before {
+    width: 4px;
+    height: 4px;
+    background: rgba(147, 163, 194, 0.55);
+}
+
+/* 打字机光标：紧跟正在输出的文字，输出完成后由 JS 移除 */
+.caret {
+    display: inline-block;
+    width: 2px;
+    height: 1.05em;
+    margin-left: 3px;
+    vertical-align: -0.16em;
+    background: var(--gold-bright);
+    box-shadow: 0 0 8px rgba(255, 217, 142, 0.8);
+    animation: caretBlink 0.85s steps(1) infinite;
+}
+
+@keyframes caretBlink {
+    0%, 55% {
+        opacity: 1;
+    }
+    56%, 100% {
+        opacity: 0;
+    }
+}
+
+/* ---------- 8. 操作区与选项按钮 ---------- */
+.action-panel {
+    min-height: 118px;
+}
+
+.hint {
+    display: flex;
+    align-items: center;
+    gap: 9px;
+    margin-bottom: 13px;
+    font-size: 13px;
+    color: var(--text-dim);
+    letter-spacing: 0.04em;
+    transition: color 0.3s;
+}
+
+/* 提示小圆点：等待玩家时持续呼吸 */
+.hint-dot {
+    width: 7px;
+    height: 7px;
+    border-radius: 50%;
+    background: var(--gold);
+    box-shadow: 0 0 0 0 rgba(232, 194, 122, 0.55);
+    animation: hintPulse 1.8s ease-out infinite;
+    flex: 0 0 auto;
+}
+
+@keyframes hintPulse {
+    0% {
+        box-shadow: 0 0 0 0 rgba(232, 194, 122, 0.5);
+        opacity: 1;
+    }
+    70% {
+        box-shadow: 0 0 0 9px rgba(232, 194, 122, 0);
+        opacity: 0.7;
+    }
+    100% {
+        box-shadow: 0 0 0 0 rgba(232, 194, 122, 0);
+        opacity: 1;
+    }
+}
+
+.hint.is-danger {
+    color: var(--red);
+}
+
+.hint.is-danger .hint-dot {
+    background: var(--red);
+    animation: none;
+    box-shadow: 0 0 10px rgba(255, 155, 155, 0.7);
+}
+
+.hint.is-win {
+    color: var(--gold-bright);
+}
+
+.hint.is-win .hint-dot {
+    animation-duration: 0.9s;
+}
+
+/* 选项容器：两列网格，窄屏自动变成一列 */
+.choices {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 13px;
+    min-height: 68px;
+}
+
+.choice-btn {
+    position: relative;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    gap: 0;
+    min-height: 68px;
+    padding: 14px 16px 14px 54px;
+    border: 1px solid rgba(150, 174, 218, 0.2);
+    border-radius: var(--radius-md);
+    background:
+        linear-gradient(150deg, rgba(38, 50, 78, 0.92), rgba(20, 27, 45, 0.94));
+    color: var(--text);
+    font-family: inherit;
+    font-size: 14.5px;
+    text-align: left;
+    cursor: pointer;
+    overflow: hidden;
+    transition: transform 0.25s var(--ease-out), border-color 0.25s, box-shadow 0.25s, background 0.25s, opacity 0.25s;
+    animation: choiceIn 0.5s var(--ease-out) both;
+}
+
+/* 悬停时从左侧掠过的一道光 */
+.choice-btn::after {
+    content: "";
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(100deg, transparent 20%, rgba(255, 217, 142, 0.13) 50%, transparent 80%);
+    transform: translateX(-120%);
+    transition: transform 0.7s var(--ease-out);
+    pointer-events: none;
+}
+
+@keyframes choiceIn {
+    from {
+        opacity: 0;
+        transform: translateY(14px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+.choice-btn:hover:not(:disabled) {
+    transform: translateY(-3px);
+    border-color: rgba(232, 194, 122, 0.58);
+    background:
+        linear-gradient(150deg, rgba(50, 62, 92, 0.96), rgba(25, 33, 54, 0.96));
+    box-shadow: 0 14px 30px rgba(0, 0, 0, 0.36), 0 0 0 1px rgba(232, 194, 122, 0.1), 0 0 24px rgba(232, 194, 122, 0.1);
+}
+
+.choice-btn:hover:not(:disabled)::after {
+    transform: translateX(120%);
+}
+
+.choice-btn:active:not(:disabled) {
+    transform: translateY(-1px) scale(0.99);
+}
+
+.choice-btn:focus-visible {
+    outline: 2px solid var(--gold);
+    outline-offset: 2px;
+}
+
+/* 选项左侧的 A / B 徽章 */
+.choice-key {
+    position: absolute;
+    top: 50%;
+    left: 15px;
+    transform: translateY(-50%);
+    width: 28px;
+    height: 28px;
+    display: grid;
+    place-items: center;
+    border: 1px solid rgba(232, 194, 122, 0.36);
+    border-radius: 9px;
+    background: rgba(232, 194, 122, 0.08);
+    color: var(--gold);
+    font-size: 12.5px;
+    font-weight: 700;
+    letter-spacing: 0.02em;
+}
+
+.choice-label {
+    position: relative;
+    z-index: 1;
+    font-weight: 600;
+    line-height: 1.5;
+}
+
+/* 已经被选中的按钮：金色描边常亮，其他按钮变暗 */
+.choice-btn.is-chosen {
+    border-color: rgba(255, 217, 142, 0.9);
+    background:
+        linear-gradient(150deg, rgba(74, 64, 43, 0.95), rgba(32, 33, 48, 0.95));
+    box-shadow: 0 0 0 1px rgba(232, 194, 122, 0.28), 0 0 28px rgba(232, 194, 122, 0.18);
+}
+
+.choice-btn.is-chosen .choice-key {
+    background: var(--gold);
+    border-color: var(--gold);
+    color: #1a1508;
+    box-shadow: 0 0 16px rgba(232, 194, 122, 0.5);
+}
+
+.choice-btn:disabled {
+    cursor: not-allowed;
+    opacity: 0.36;
+    transform: none;
+}
+
+.choice-btn.is-chosen:disabled {
+    opacity: 1;
+}
+
+/* ---------- 9. 页脚 ---------- */
+.game-footer {
+    display: flex;
+    align-items: center;
+    justify-content: flex-end;
+    gap: 12px;
+    flex-wrap: wrap;
+    padding-top: 12px;
+    margin-top: 12px;
+    border-top: 1px solid var(--line);
+    font-size: 11.5px;
+    color: var(--text-faint);
+    letter-spacing: 0.03em;
+}
+
+.footer-tip {
+    color: #5a6a8c;
+}
+
+/* ---------- 10. 结局 / 失败弹层 ---------- */
+.overlay {
+    position: fixed;
+    inset: 0;
+    z-index: 50;
+    display: grid;
+    place-items: center;
+    padding: 22px;
+}
+
+.overlay[hidden] {
+    display: none;
+}
+
+.overlay-backdrop {
+    position: absolute;
+    inset: 0;
+    background:
+        radial-gradient(600px 420px at 50% 42%, rgba(30, 41, 68, 0.6), transparent 72%),
+        rgba(3, 5, 12, 0.84);
+    backdrop-filter: blur(7px);
+    animation: backdropIn 0.4s ease both;
+}
+
+@keyframes backdropIn {
+    from {
+        opacity: 0;
+    }
+    to {
+        opacity: 1;
+    }
+}
+
+.overlay-card {
+    position: relative;
+    z-index: 1;
+    width: min(430px, 100%);
+    padding: 34px 30px 28px;
+    text-align: center;
+    border: 1px solid rgba(232, 194, 122, 0.3);
+    border-radius: 24px;
+    background:
+        linear-gradient(165deg, rgba(28, 38, 60, 0.98), rgba(10, 14, 26, 0.99));
+    box-shadow: 0 40px 100px rgba(0, 0, 0, 0.7), inset 0 1px 0 rgba(255, 255, 255, 0.06);
+    animation: overlayPop 0.55s cubic-bezier(0.2, 0.9, 0.3, 1.25) both;
+    overflow: hidden;
+}
+
+@keyframes overlayPop {
+    from {
+        opacity: 0;
+        transform: translateY(26px) scale(0.94);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0) scale(1);
+    }
+}
+
+/* 失败时整张卡片轻微抖动，强化“翻车”的反馈 */
+.overlay-card.is-fail {
+    animation: overlayPop 0.55s cubic-bezier(0.2, 0.9, 0.3, 1.25) both, failShake 0.55s 0.55s ease-in-out;
+}
+
+@keyframes failShake {
+    0%, 100% {
+        transform: translateX(0);
+    }
+    20% {
+        transform: translateX(-7px);
+    }
+    40% {
+        transform: translateX(6px);
+    }
+    60% {
+        transform: translateX(-4px);
+    }
+    80% {
+        transform: translateX(3px);
+    }
+}
+
+/* 通关时卡片顶部泛出金色光晕 */
+.overlay-card.is-win {
+    border-color: rgba(255, 217, 142, 0.6);
+    box-shadow: 0 40px 100px rgba(0, 0, 0, 0.7), 0 0 70px rgba(232, 194, 122, 0.16), inset 0 1px 0 rgba(255, 255, 255, 0.08);
+}
+
+.overlay-card.is-win::before {
+    content: "";
+    position: absolute;
+    top: -110px;
+    left: 50%;
+    width: 320px;
+    height: 220px;
+    transform: translateX(-50%);
+    border-radius: 50%;
+    background: radial-gradient(circle, rgba(255, 217, 142, 0.26), transparent 70%);
+    pointer-events: none;
+}
+
+/* 结局图标：外圈脉冲光环 */
+.overlay-icon {
+    position: relative;
+    width: 96px;
+    height: 96px;
+    margin: 0 auto 16px;
+    display: grid;
+    place-items: center;
+    font-size: 48px;
+    line-height: 1;
+    border-radius: 50%;
+    background: radial-gradient(circle, rgba(255, 255, 255, 0.08), transparent 70%);
+}
+
+.overlay-icon::before,
+.overlay-icon::after {
+    content: "";
+    position: absolute;
+    inset: 0;
+    border-radius: 50%;
+    border: 1px solid rgba(232, 194, 122, 0.3);
+    animation: ringPulse 2.6s ease-out infinite;
+}
+
+.overlay-icon::after {
+    animation-delay: 1.3s;
+}
+
+.overlay-card.is-fail .overlay-icon {
+    filter: grayscale(0.25);
+}
+
+.overlay-card.is-fail .overlay-icon::before,
+.overlay-card.is-fail .overlay-icon::after {
+    border-color: rgba(255, 155, 155, 0.28);
+}
+
+.overlay-card.is-win .overlay-icon {
+    animation: treasureFloat 3s ease-in-out infinite;
+}
+
+@keyframes ringPulse {
+    0% {
+        transform: scale(0.82);
+        opacity: 0.85;
+    }
+    100% {
+        transform: scale(1.45);
+        opacity: 0;
+    }
+}
+
+@keyframes treasureFloat {
+    0%, 100% {
+        transform: translateY(0);
+    }
+    50% {
+        transform: translateY(-7px);
+    }
+}
+
+.overlay-card h2 {
+    font-size: 25px;
+    letter-spacing: 0.08em;
+    background: linear-gradient(100deg, #fff6e2, var(--gold-bright), #d9ae64);
+    -webkit-background-clip: text;
+    background-clip: text;
+    color: transparent;
+}
+
+.overlay-card.is-fail h2 {
+    background: linear-gradient(100deg, #ffd7d7, #ff9b9b, #d96a6a);
+    -webkit-background-clip: text;
+    background-clip: text;
+    color: transparent;
+}
+
+.overlay-text {
+    margin-top: 11px;
+    font-size: 14px;
+    line-height: 1.85;
+    color: var(--text-dim);
+}
+
+.overlay-stats {
+    list-style: none;
+    display: grid;
+    gap: 8px;
+    margin: 20px 0 24px;
+    padding: 14px 16px;
+    border: 1px solid var(--line);
+    border-radius: 14px;
+    background: rgba(8, 12, 23, 0.55);
+}
+
+.overlay-stats li {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    font-size: 12.5px;
+    color: var(--text-faint);
+}
+
+.overlay-stats li strong {
+    color: var(--text);
+    font-weight: 600;
+}
+
+.primary-btn {
+    width: 100%;
+    padding: 13px 18px;
+    border: 1px solid rgba(255, 217, 142, 0.7);
+    border-radius: 13px;
+    background: linear-gradient(135deg, #f2d69a, #e8c27a 45%, #cf9f4c);
+    color: #221a08;
+    font-family: inherit;
+    font-size: 15px;
+    font-weight: 700;
+    letter-spacing: 0.08em;
+    cursor: pointer;
+    box-shadow: 0 12px 30px rgba(232, 194, 122, 0.24);
+    transition: transform 0.25s var(--ease-out), box-shadow 0.25s, filter 0.25s;
+}
+
+.primary-btn:hover {
+    transform: translateY(-2px);
+    filter: brightness(1.06);
+    box-shadow: 0 16px 38px rgba(232, 194, 122, 0.34);
+}
+
+.primary-btn:active {
+    transform: translateY(0) scale(0.99);
+}
+
+.primary-btn:focus-visible {
+    outline: 2px solid #fff3d4;
+    outline-offset: 3px;
+}
+
+/* ---------- 11. 通关彩带（由 JS 动态生成） ---------- */
+.confetti {
+    position: absolute;
+    inset: 0;
+    z-index: 2;
+    overflow: hidden;
+    pointer-events: none;
+}
+
+.confetti-piece {
+    position: absolute;
+    top: -24px;
+    width: 8px;
+    height: 14px;
+    border-radius: 2px;
+    opacity: 0;
+    animation-name: confettiFall;
+    animation-timing-function: linear;
+    animation-fill-mode: forwards;
+}
+
+@keyframes confettiFall {
+    0% {
+        opacity: 0;
+        transform: translate3d(0, -20px, 0) rotate(0deg);
+    }
+    10% {
+        opacity: 1;
+    }
+    100% {
+        opacity: 0.9;
+        transform: translate3d(var(--drift, 40px), 105vh, 0) rotate(720deg);
+    }
+}
+
+/* ---------- 12. 响应式 ---------- */
+@media (max-width: 720px) {
+    body {
+        align-items: flex-start;
+        padding: 14px 12px;
+    }
+
+    .game-card {
+        padding: 20px 16px 14px;
+        border-radius: 20px;
+    }
+
+    .game-header {
+        gap: 12px;
+    }
+
+    /* 换行后让“重新开始”靠右，避免孤零零地贴在左边 */
+    .game-header .ghost-btn {
+        margin-left: auto;
+    }
+
+    .compass {
+        width: 46px;
+        height: 46px;
+    }
+
+    .compass-needle {
+        top: 8px;
+        height: 27px;
+    }
+
+    .hud {
+        align-items: flex-start;
+        gap: 12px;
+        padding: 13px 0 15px;
+    }
+
+    .hud-item {
+        min-width: 60px;
+    }
+
+    .hud-value {
+        font-size: 13.5px;
+    }
+
+    .cleared-panel {
+        max-width: 68%;
+    }
+
+    .journey {
+        height: 116px;
+        margin-bottom: 12px;
+    }
+
+    .scene-icon {
+        font-size: 36px;
+    }
+
+    .scene-caption {
+        top: 8px;
+        left: 12px;
+        font-size: 10.5px;
+        letter-spacing: 0.12em;
+    }
+
+    .story-panel {
+        height: 42vh;
+        min-height: 230px;
+    }
+
+    .story-scroll {
+        padding: 16px 16px 30px;
+    }
+
+    .story-line {
+        font-size: 14.5px;
+        line-height: 1.85;
+    }
+
+    .choices {
+        grid-template-columns: 1fr;
+    }
+
+    .choice-btn {
+        min-height: 62px;
+        padding: 12px 14px 12px 50px;
+    }
+
+    .game-footer {
+        justify-content: center;
+        text-align: center;
+    }
+}
+
+/* ---------- 13. 尊重“减少动态效果”系统设置 ---------- */
+@media (prefers-reduced-motion: reduce) {
+    *,
+    *::before,
+    *::after {
+        animation-duration: 0.01ms !important;
+        animation-iteration-count: 1 !important;
+        transition-duration: 0.01ms !important;
+    }
+}

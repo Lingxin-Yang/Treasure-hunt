@@ -1,0 +1,111 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="Argus-Cell 寻宝之旅：在神庙与迷雾中做出选择，寻找传说中的宝藏">
+    <title>Argus-Cell 寻宝之旅</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <!-- ===== 背景装饰层：光晕、雾气与漂浮尘埃（纯 CSS 动画） ===== -->
+    <div class="background" aria-hidden="true">
+        <div class="orb orb-a"></div>
+        <div class="orb orb-b"></div>
+        <div class="orb orb-c"></div>
+        <div class="fog fog-a"></div>
+        <div class="fog fog-b"></div>
+        <!-- 尘埃粒子由 script.js 动态生成 -->
+        <div class="dust" id="dust"></div>
+    </div>
+
+    <!-- ===== 游戏主面板 ===== -->
+    <main class="game-card">
+        <!-- 顶部品牌区 -->
+        <header class="game-header">
+            <div class="brand">
+                <!-- 纯 CSS 绘制的罗盘：外圈旋转，指针缓慢摆动 -->
+                <div class="compass" aria-hidden="true">
+                    <span class="compass-ring"></span>
+                    <span class="compass-needle"></span>
+                    <span class="compass-star">✦</span>
+                </div>
+                <div class="brand-text">
+                    <h1>Argus-Cell <span class="title-accent">寻宝之旅</span></h1>
+                </div>
+            </div>
+            <button class="ghost-btn" id="restartBtn" type="button">
+                <span class="ghost-icon" aria-hidden="true">↻</span>重新开始
+            </button>
+        </header>
+
+        <!-- 状态栏：当前章节 + 只记录已经通过的地点 -->
+        <section class="hud" aria-label="冒险状态">
+            <div class="hud-item">
+                <span class="hud-label">当前章节</span>
+                <strong class="hud-value" id="chapterLabel">序章</strong>
+            </div>
+            <div class="cleared-panel">
+                <span class="hud-label">已通过</span>
+                <div class="cleared-list" id="clearedList" aria-live="polite">
+                    <span class="cleared-empty" id="clearedEmpty">尚无</span>
+                </div>
+            </div>
+        </section>
+
+        <!-- 寻宝场景：随关卡切换的纯 CSS 动画舞台，由游戏流程驱动 -->
+        <section class="journey" id="journey" data-scene="library" aria-label="当前寻宝场景">
+            <div class="journey-sky" aria-hidden="true"></div>
+            <div class="journey-orb" aria-hidden="true"></div>
+            <div class="journey-fog journey-fog-a" aria-hidden="true"></div>
+            <div class="journey-fog journey-fog-b" aria-hidden="true"></div>
+            <div class="journey-props" id="sceneProps" aria-hidden="true"></div>
+            <div class="journey-content">
+                <span class="scene-icon" id="sceneIcon" aria-hidden="true">📖</span>
+                <span class="scene-caption" id="sceneCaption">古老的图书馆</span>
+            </div>
+            <div class="journey-ground" aria-hidden="true"></div>
+        </section>
+
+        <!-- 剧情窗口：新剧情会逐行追加并自动滚动 -->
+        <section class="story-panel" aria-label="剧情记录">
+            <div class="story-scroll" id="storyScroll">
+                <div class="story-log" id="storyLog" role="log" aria-live="polite" aria-atomic="false">
+                    <p class="story-placeholder" id="storyPlaceholder">羊皮卷正在展开……</p>
+                </div>
+            </div>
+            <div class="scroll-fade" aria-hidden="true"></div>
+        </section>
+
+        <!-- 操作区：提示文字 + 由 JS 动态渲染的选项按钮 -->
+        <section class="action-panel">
+            <div class="hint" id="hint">
+                <span class="hint-dot" aria-hidden="true"></span>
+                <span id="hintText">正在翻开羊皮卷……</span>
+            </div>
+            <div class="choices" id="choices" aria-label="当前可选行动"></div>
+        </section>
+
+        <footer class="game-footer">
+            <span class="footer-tip">键盘 A / B 也可选择</span>
+        </footer>
+    </main>
+
+    <!-- ===== 结局 / 失败弹层 ===== -->
+    <div class="overlay" id="overlay" hidden>
+        <div class="overlay-backdrop"></div>
+        <div class="confetti" id="confetti" aria-hidden="true"></div>
+        <div class="overlay-card" id="overlayCard" role="dialog" aria-modal="true" aria-labelledby="overlayTitle">
+            <div class="overlay-icon" id="overlayIcon">💀</div>
+            <h2 id="overlayTitle">Game Over</h2>
+            <p class="overlay-text" id="overlayText"></p>
+            <ul class="overlay-stats" id="overlayStats"></ul>
+            <button class="primary-btn" id="overlayBtn" type="button">再试一次</button>
+        </div>
+    </div>
+
+    <!-- 脚本放在 body 末尾，保证 DOM 已就绪 -->
+    <script src="script.js"></script>
+</body>
+</html>
+
